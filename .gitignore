@@ -1,0 +1,28 @@
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.tmp/
+*.tsbuildinfo
+
+# Python / Backend
+__pycache__/
+*.pyc
+backend/__pycache__/
+backend/*/__pycache__/
+backend/scanners/__pycache__/
+backend/database/__pycache__/
+backend/models/__pycache__/
+backend/reports/__pycache__/
+backend/risk/__pycache__/
+backend/demo_target/__pycache__/
+*.db
+backend/*.db
+backend/reports/*.pdf
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
