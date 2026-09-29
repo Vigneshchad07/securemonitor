@@ -1,11 +1,32 @@
 import os
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
 from datetime import datetime
 
+try:
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    REPORTLAB_AVAILABLE = True
+except Exception as e:
+    print(f"ReportLab import notice: {str(e)}")
+    REPORTLAB_AVAILABLE = False
+
 def generate_pdf_report(assessment_id: str, target_name: str, target_url: str, overall_score: int, findings: list, output_filename: str) -> str:
+    if not REPORTLAB_AVAILABLE:
+        # Serverless fallback HTML/PDF text report if ReportLab C libraries are omitted
+        html_content = f"""
+        SECUREMONITOR AI SECURITY ASSESSMENT REPORT
+        Assessment ID: {assessment_id}
+        Target: {target_name} ({target_url})
+        Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}
+        Overall Score: {overall_score} / 100
+        
+        Total Findings: {len(findings)}
+        """
+        with open(output_filename, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        return output_filename
+
     doc = SimpleDocTemplate(
         output_filename,
         pagesize=letter,
@@ -18,9 +39,9 @@ def generate_pdf_report(assessment_id: str, target_name: str, target_url: str, o
     styles = getSampleStyleSheet()
     
     # Custom Palette
-    c_primary = colors.HexColor("#0F172A")    # Deep Navy
-    c_accent = colors.HexColor("#0284C7")     # Cyan Accent
-    c_dark = colors.HexColor("#1E293B")       # Dark Card
+    c_primary = colors.HexColor("#0F172A")
+    c_accent = colors.HexColor("#0284C7")
+    c_dark = colors.HexColor("#1E293B")
     c_light = colors.HexColor("#F8FAFC")
     c_critical = colors.HexColor("#DC2626")
     c_high = colors.HexColor("#EA580C")
@@ -128,7 +149,6 @@ def generate_pdf_report(assessment_id: str, target_name: str, target_url: str, o
     ))
     elements.append(Spacer(1, 10))
 
-    # Summary Table of Severity Counts
     crit_count = sum(1 for f in findings if f.get("severity") == "Critical")
     high_count = sum(1 for f in findings if f.get("severity") == "High")
     med_count = sum(1 for f in findings if f.get("severity") == "Medium")
@@ -192,7 +212,6 @@ def generate_pdf_report(assessment_id: str, target_name: str, target_url: str, o
 
         elements.append(Spacer(1, 15))
 
-    # 5. Conclusion & Authorization Disclaimer
     elements.append(HRFlowable(width="100%", thickness=1, color=c_accent, spaceAfter=10))
     elements.append(Paragraph("<b>Authorization & Compliance Notice:</b> This security assessment was conducted strictly against an authorized local target in accordance with NTRO SIH 2026 Problem Statement 26163 non-destructive testing guidelines.", ParagraphStyle('Foot', fontName='Helvetica-Oblique', fontSize=8, textColor=colors.HexColor("#64748B"))))
 
