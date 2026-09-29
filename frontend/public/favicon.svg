@@ -1,23 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
+    <!-- Background Radial Glow -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </radialGradient>
+
+    <!-- Cyan Shield Gradient -->
     <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284c7" />
-      <stop offset="100%" stop-color="#2563eb" />
-    </linearGradient>
-    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="100%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+
+    <!-- Core Ring Glow -->
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.2" />
     </linearGradient>
   </defs>
 
-  <!-- Outer Shield -->
-  <path d="M32 4L8 14V30C8 45.4 18.2 55.6 32 60C45.8 55.6 56 45.4 56 30V14L32 4Z" fill="url(#shieldGrad)" stroke="#38bdf8" stroke-width="2" />
+  <!-- Background Base Circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bgGlow)" stroke="#0284c7" stroke-width="3" />
   
-  <!-- Inner Shield Glow -->
-  <path d="M32 10L14 17.5V30C14 41.5 21.7 49.3 32 53C42.3 49.3 50 41.5 50 30V17.5L32 10Z" fill="#0f172a" opacity="0.8" />
+  <!-- Cyber Radar Crosshair Grid Rings -->
+  <circle cx="64" cy="64" r="48" fill="none" stroke="#1e293b" stroke-width="2" stroke-dasharray="4 4" />
+  <circle cx="64" cy="64" r="36" fill="none" stroke="url(#ringGrad)" stroke-width="2" />
   
-  <!-- Lock Symbol -->
-  <rect x="23" y="29" width="18" height="14" rx="3" fill="url(#glowGrad)" />
-  <path d="M26 29V23C26 19.7 28.7 17 32 17C35.3 17 38 19.7 38 23V29" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
-  <circle cx="32" cy="35" r="2" fill="#0f172a" />
+  <line x1="64" y1="12" x2="64" y2="116" stroke="#0284c7" stroke-width="1.5" stroke-opacity="0.4" />
+  <line x1="12" y1="64" x2="116" y2="64" stroke="#0284c7" stroke-width="1.5" stroke-opacity="0.4" />
+
+  <!-- Main Cybersecurity Shield -->
+  <path d="M64 24 L36 36 V62 C36 82 48 98 64 104 C80 98 92 82 92 62 V36 L64 24 Z" 
+        fill="url(#shieldGrad)" 
+        stroke="#7dd3fc" 
+        stroke-width="3" 
+        stroke-linejoin="round" />
+
+  <!-- Inner Dark Shield Core -->
+  <path d="M64 30 L43 39 V60 C43 75 52 87 64 92 C76 87 85 75 85 60 V39 L64 30 Z" 
+        fill="#090d16" 
+        stroke="#0284c7" 
+        stroke-width="1.5" />
+
+  <!-- Central Target Eye / Lock Core -->
+  <circle cx="64" cy="58" r="10" fill="#0284c7" />
+  <circle cx="64" cy="58" r="5" fill="#38bdf8" />
+  <path d="M64 48 V52 M64 64 V68 M54 58 H58 M70 58 H74" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" />
 </svg>
