@@ -3,14 +3,22 @@ import os
 import json
 from datetime import datetime
 
-# Environment check for Vercel / serverless writable directory (/tmp)
-if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+# Serverless environment check for write permissions
+try:
+    test_file = os.path.join(os.path.dirname(__file__), ".write_test")
+    with open(test_file, "w") as f:
+        f.write("1")
+    os.remove(test_file)
+    is_writable = True
+except Exception:
+    is_writable = False
+
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or not is_writable:
     DB_PATH = "/tmp/securemonitor.db"
 else:
     DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "securemonitor.db")
 
 def get_db():
-    # Automatically ensure DB and tables are initialized
     if not os.path.exists(DB_PATH):
         init_db()
     conn = sqlite3.connect(DB_PATH)
@@ -18,6 +26,7 @@ def get_db():
     return conn
 
 def init_db():
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()

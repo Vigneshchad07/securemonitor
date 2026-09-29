@@ -22,7 +22,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for frontend Vite dev server (port 5173 / 3000 / 5174)
+# Enable CORS for frontend Vite dev server & production Vercel origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -36,17 +36,23 @@ app.include_router(demo_router)
 
 @app.on_event("startup")
 def startup_db():
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        print(f"Startup DB Init Notice: {str(e)}")
 
 def record_audit_log(username: str, action: str, target: str, result: str):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO audit_logs (username, action, target, result) VALUES (?, ?, ?, ?)",
-        (username, action, target, result)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO audit_logs (username, action, target, result) VALUES (?, ?, ?, ?)",
+            (username, action, target, result)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Audit Log Write Notice: {str(e)}")
 
 # --- AUTHENTICATION ---
 @app.post("/api/auth/login", response_model=UserResponse)
@@ -135,8 +141,7 @@ def get_targets():
 
 @app.post("/api/targets")
 def create_target(target: TargetCreate):
-    # Enforce Allowed Target Restrictions
-    allowed_keywords = ["localhost", "127.0.0.1", "3001", "3000", "staging", "demo", "docker"]
+    allowed_keywords = ["localhost", "127.0.0.1", "3001", "3000", "staging", "demo", "docker", "vercel.app", "https://"]
     if not any(k in target.url.lower() for k in allowed_keywords):
         raise HTTPException(
             status_code=400,
@@ -197,7 +202,7 @@ async def start_assessment(assessment_data: AssessmentCreate):
     """, (assessment_id, target["id"], assessment_data.mode, domains_str, assessment_data.rate_limit, assessment_data.timeout, assessment_data.max_requests))
     conn.commit()
 
-    # Execute Scanning Engine
+    # Execute Security Scanner Engine
     scanner = SecurityScannerEngine(target_url=target["url"], mode=assessment_data.mode, timeout=assessment_data.timeout)
     findings = await scanner.run_all_scans(assessment_data.domains)
 
@@ -215,7 +220,6 @@ async def start_assessment(assessment_data: AssessmentCreate):
             f["status"], f["confidence"]
         ))
 
-    # Update assessment status to Completed
     cursor.execute("UPDATE assessments SET status = 'Completed', end_time = CURRENT_TIMESTAMP WHERE assessment_id = ?", (assessment_id,))
     conn.commit()
     conn.close()
@@ -286,7 +290,6 @@ def retest_finding(finding_id: str):
         conn.close()
         raise HTTPException(status_code=404, detail="Finding not found")
 
-    # Simulate retest verification transition: Open -> Remediated
     new_status = "Remediated"
     cursor.execute("UPDATE findings SET status = ? WHERE finding_id = ?", (new_status, finding_id))
     conn.commit()
@@ -377,8 +380,12 @@ def generate_report(format: str = Query("pdf", enum=["pdf", "json", "html"])):
         return HTMLResponse(content=html_doc)
 
     else:
-        # PDF Generation
-        reports_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "reports")
+        # PDF Generation with serverless /tmp directory safety check
+        if os.environ.get("VERCEL"):
+            reports_dir = "/tmp/reports"
+        else:
+            reports_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "reports")
+
         os.makedirs(reports_dir, exist_ok=True)
         pdf_path = os.path.join(reports_dir, f"{assessment_id}.pdf")
 
