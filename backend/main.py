@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Depends, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from datetime import datetime
+from typing import Optional
 
 from database.db import get_db, init_db
 from models.schemas import (
@@ -33,13 +34,6 @@ app.add_middleware(
 
 # Include Vulnerable Demo Router
 app.include_router(demo_router)
-
-@app.on_event("startup")
-def startup_db():
-    try:
-        init_db()
-    except Exception as e:
-        print(f"Startup DB Init Notice: {str(e)}")
 
 def record_audit_log(username: str, action: str, target: str, result: str):
     try:
@@ -202,11 +196,9 @@ async def start_assessment(assessment_data: AssessmentCreate):
     """, (assessment_id, target["id"], assessment_data.mode, domains_str, assessment_data.rate_limit, assessment_data.timeout, assessment_data.max_requests))
     conn.commit()
 
-    # Execute Security Scanner Engine
     scanner = SecurityScannerEngine(target_url=target["url"], mode=assessment_data.mode, timeout=assessment_data.timeout)
     findings = await scanner.run_all_scans(assessment_data.domains)
 
-    # Store discovered findings in SQLite DB
     for f in findings:
         cursor.execute("""
         INSERT OR REPLACE INTO findings 
@@ -380,7 +372,6 @@ def generate_report(format: str = Query("pdf", enum=["pdf", "json", "html"])):
         return HTMLResponse(content=html_doc)
 
     else:
-        # PDF Generation with serverless /tmp directory safety check
         if os.environ.get("VERCEL"):
             reports_dir = "/tmp/reports"
         else:
