@@ -3,15 +3,23 @@ import os
 import json
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "securemonitor.db")
+# Environment check for Vercel / serverless writable directory (/tmp)
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    DB_PATH = "/tmp/securemonitor.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "securemonitor.db")
 
 def get_db():
+    # Automatically ensure DB and tables are initialized
+    if not os.path.exists(DB_PATH):
+        init_db()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    conn = get_db()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     # Users Table
@@ -103,7 +111,6 @@ def init_db():
     # Seed Default Admin & Analyst User if empty
     cursor.execute("SELECT COUNT(*) as count FROM users")
     if cursor.fetchone()["count"] == 0:
-        # Default pass hashes (plain sha256 or simple for demo, or hardcoded hashes)
         cursor.execute("INSERT INTO users (username, password_hash, role, full_name) VALUES ('admin', 'admin123', 'Admin', 'Lead Security Admin')")
         cursor.execute("INSERT INTO users (username, password_hash, role, full_name) VALUES ('analyst', 'analyst123', 'Security Analyst', 'NTRO Security Analyst')")
         cursor.execute("INSERT INTO users (username, password_hash, role, full_name) VALUES ('viewer', 'viewer123', 'Viewer', 'Auditor / Viewer')")
@@ -130,4 +137,4 @@ def init_db():
 
 if __name__ == "__main__":
     init_db()
-    print("Database initialized successfully.")
+    print(f"Database initialized successfully at {DB_PATH}.")
