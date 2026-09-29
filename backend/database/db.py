@@ -3,17 +3,8 @@ import os
 import json
 from datetime import datetime
 
-# Serverless environment check for write permissions
-try:
-    test_file = os.path.join(os.path.dirname(__file__), ".write_test")
-    with open(test_file, "w") as f:
-        f.write("1")
-    os.remove(test_file)
-    is_writable = True
-except Exception:
-    is_writable = False
-
-if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or not is_writable:
+# Vercel and AWS Lambda serverless read-only environment check
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("VERCEL_ENV"):
     DB_PATH = "/tmp/securemonitor.db"
 else:
     DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "securemonitor.db")
